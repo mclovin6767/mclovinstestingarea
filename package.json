@@ -1,0 +1,51 @@
+{
+  "name": "qr-dines-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "QR Dines POS — Windows desktop shell (Electron). Thin client over the hosted app.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "dist": "electron-builder --win",
+    "dist:dir": "electron-builder --win --dir"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "@sentry/electron": "^5.6.0",
+    "electron-updater": "^6.3.9"
+  },
+  "build": {
+    "appId": "app.qrdines.pos",
+    "productName": "QR Dines",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "sachinbhati779",
+        "repo": "QR_dines"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  }
+}

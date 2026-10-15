@@ -1,0 +1,23 @@
+# gitleaks configuration for QR Dines.
+# Extends the default ruleset and allowlists intentionally-fake values (test fixtures and
+# example-env placeholders) so CI fails only on genuine secrets, not on known non-secrets.
+title = "QR Dines gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Non-secret test fixtures and example env placeholders"
+paths = [
+  # Any example env file (.env.example, .env.production.example, .env.staging.example, ...).
+  '''\.env(\.[a-z0-9-]+)?\.example$''',
+  # Test files legitimately contain fake secrets/credentials as fixtures.
+  '''.*\.spec\.ts$''',
+]
+regexes = [
+  '''replace-with-[a-z-]+''',
+  '''\[YOUR-PASSWORD\]''',
+  '''your-project\.supabase\.co''',
+  '''test-supabase-jwt-secret-at-least-32-bytes-long''',
+  '''password123''',
+]

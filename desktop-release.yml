@@ -1,0 +1,40 @@
+name: Desktop release
+
+# Builds the Windows installer and publishes it to GitHub Releases (which is also the auto-update
+# feed configured in apps/desktop/package.json `build.publish`). Trigger by pushing a tag like
+# `desktop-v0.1.0`, or run manually.
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'desktop-v*'
+
+permissions:
+  contents: write # electron-builder creates the GitHub Release
+
+jobs:
+  build:
+    name: Build & publish Windows installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install (standalone desktop package)
+        working-directory: apps/desktop
+        run: npm install
+
+      - name: Build + publish
+        working-directory: apps/desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Code signing — optional until a cert exists. Add these repo secrets to produce a signed
+          # installer (no SmartScreen warning): WINDOWS_CSC_LINK = base64 of the .pfx, and the password.
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: npx electron-builder --win --publish always

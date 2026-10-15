@@ -1,0 +1,72 @@
+name: Frontend CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    name: Lint, typecheck, and build frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspace apps/frontend
+
+      - name: Typecheck
+        run: npx tsc --noEmit -p apps/frontend
+
+      - name: Build
+        run: npm run build --workspace apps/frontend
+        env:
+          # Build-time placeholder; the real value is provided at runtime. next build only needs
+          # this to be a valid URL, it does not call the API during static generation.
+          NEXT_PUBLIC_API_URL: https://api.example.com/api
+
+  e2e:
+    name: Playwright e2e (frontend, mocked API)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build --workspace apps/frontend
+        env:
+          NEXT_PUBLIC_API_URL: https://api.example.com/api
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/frontend
+
+      - name: Run e2e
+        run: npm run test:e2e --workspace apps/frontend

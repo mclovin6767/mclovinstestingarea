@@ -1,0 +1,40 @@
+name: Post-deploy smoke
+
+# Render auto-deploys from master, so this can't hook "after each deploy" directly. Instead it
+# runs on a schedule (continuous prod health) and on demand — a failed run emails the repo owner,
+# turning an outage into an alert in minutes instead of a user report.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: Base URL to smoke test
+        required: false
+        default: https://qr-dines.onrender.com
+  schedule:
+    - cron: '*/30 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: Smoke test prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Run smoke test
+        env:
+          # Falls back to the prod URL; override via dispatch input or a SMOKE_BASE_URL repo variable.
+          SMOKE_BASE_URL: ${{ github.event.inputs.base_url || vars.SMOKE_BASE_URL || 'https://qr-dines.onrender.com' }}
+          # Optional: set these repo secrets (a dedicated smoke account, never a real owner) to also
+          # exercise login → restaurants → subscription. Absent → authed checks are skipped.
+          SMOKE_EMAIL: ${{ secrets.SMOKE_EMAIL }}
+          SMOKE_PASSWORD: ${{ secrets.SMOKE_PASSWORD }}
+        run: node apps/backend/scripts/smoke.mjs

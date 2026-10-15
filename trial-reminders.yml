@@ -1,0 +1,33 @@
+name: Trial reminders
+
+# Daily nudge to owners whose 14-day Pro trial ends within 3 days. Hits the secret-guarded internal
+# endpoint (the app does the DB query + email). No-op unless the CRON_SECRET repo secret is set.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *' # 06:00 UTC daily
+
+permissions:
+  contents: read
+
+jobs:
+  send:
+    name: Send trial reminders
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger trial reminders
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://qr-dines.onrender.com' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET not set; skipping."
+            exit 0
+          fi
+          code=$(curl -sS -o /tmp/out.json -w '%{http_code}' -X POST \
+            "$API_BASE_URL/api/internal/trial-reminders" \
+            -H "x-cron-secret: $CRON_SECRET")
+          echo "HTTP $code"
+          cat /tmp/out.json 2>/dev/null || true
+          echo
+          test "$code" = "200"

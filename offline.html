@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'" />
+    <title>QR Dines — Offline</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; }
+      body {
+        display: flex; align-items: center; justify-content: center;
+        background: #0b0f14; color: #e6edf3;
+        font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+      main { text-align: center; max-width: 30rem; padding: 2rem; }
+      .brand { font-weight: 800; letter-spacing: .02em; color: #34d399; font-size: 1.5rem; margin-bottom: 2rem; }
+      .spinner {
+        width: 44px; height: 44px; margin: 0 auto 1.5rem;
+        border: 4px solid rgba(255,255,255,.12); border-top-color: #34d399; border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      h1 { font-size: 1.25rem; margin: 0 0 .5rem; }
+      p { color: #9fb0c0; margin: .25rem 0; line-height: 1.5; }
+      button {
+        margin-top: 1.5rem; padding: .7rem 1.4rem; border: 0; border-radius: .6rem;
+        background: #34d399; color: #04120c; font-weight: 700; font-size: .95rem; cursor: pointer;
+      }
+      button:hover { background: #10b981; }
+      .hint { margin-top: 1rem; font-size: .8rem; color: #6b7d8f; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand">QR Dines</div>
+      <div class="spinner" aria-hidden="true"></div>
+      <h1>Can’t reach QR Dines</h1>
+      <p>Check the network connection — the till will reconnect automatically as soon as it’s back.</p>
+      <button id="retry" type="button">Retry now</button>
+      <p class="hint">Retrying every few seconds…</p>
+    </main>
+    <script>
+      document.getElementById('retry').addEventListener('click', function () {
+        if (window.qrDinesDesktop && window.qrDinesDesktop.retryConnection) {
+          window.qrDinesDesktop.retryConnection();
+        }
+      });
+    </script>
+  </body>
+</html>

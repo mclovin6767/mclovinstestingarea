@@ -1,0 +1,34 @@
+name: Payment reconcile
+
+# Safety net for pay-at-table: re-checks open Cashfree payment intents against Cashfree's order status
+# and settles a paid-but-webhook-lost order (or expires a stale one). The app does all the work; this
+# just pokes the secret-guarded internal endpoint. No-op unless the CRON_SECRET repo secret is set.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *' # every ~5 minutes (GitHub may delay under load)
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    name: Reconcile payments
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger payment reconcile
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL || 'https://qr-dines.onrender.com' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "CRON_SECRET not set; skipping."
+            exit 0
+          fi
+          code=$(curl -sS -o /tmp/out.json -w '%{http_code}' -X POST \
+            "$API_BASE_URL/api/internal/payment-reconcile" \
+            -H "x-cron-secret: $CRON_SECRET")
+          echo "HTTP $code"
+          cat /tmp/out.json 2>/dev/null || true
+          echo
+          test "$code" = "200"
